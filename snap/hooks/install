@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+
+snapctl set addr=127.0.0.1 port=8080

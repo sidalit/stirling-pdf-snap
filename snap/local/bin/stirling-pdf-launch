@@ -1,0 +1,34 @@
+#!/bin/sh
+set -eu
+umask 077
+
+export HOME="$SNAP_COMMON/home"
+export XDG_CACHE_HOME="$SNAP_COMMON/cache"
+export TMPDIR="$SNAP_COMMON/tmp"
+export TESSDATA_PREFIX="$SNAP_COMMON/tessdata"
+export SYSTEM_TESSDATADIR="$TESSDATA_PREFIX"
+export PATH="$SNAP/usr/bin:$SNAP/bin:$PATH"
+export SYSTEM_SHOWUPDATE=false
+export SYSTEM_ENABLEANALYTICS=false
+export SECURITY_ENABLELOGIN=false
+export AIENGINE_ENABLED=false
+SERVER_ADDRESS="$(snapctl get addr)"
+SERVER_PORT="$(snapctl get port)"
+export SERVER_ADDRESS SERVER_PORT
+
+mkdir -p "$HOME" "$XDG_CACHE_HOME" "$TMPDIR" "$TESSDATA_PREFIX"
+# Keep downloaded OCR languages while supplying bundled language/config files.
+cp -an "$SNAP/usr/share/tesseract-ocr/5/tessdata/." "$TESSDATA_PREFIX/"
+
+for java_home in "$SNAP"/usr/lib/jvm/java-25-openjdk-*; do
+  export JAVA_HOME="$java_home"
+done
+for libdir in "$SNAP"/usr/lib/*-linux-gnu; do
+  export LD_LIBRARY_PATH="$libdir:${LD_LIBRARY_PATH:-}"
+done
+
+# Upstream keeps configs, logs and pipeline folders relative to this directory.
+cd "$SNAP_COMMON"
+exec "$JAVA_HOME/bin/java" -Djava.awt.headless=true \
+  -Duser.home="$HOME" -Djava.io.tmpdir="$TMPDIR" \
+  -jar "$SNAP/lib/stirling-pdf.jar"

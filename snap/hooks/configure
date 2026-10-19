@@ -1,0 +1,34 @@
+#!/bin/sh
+set -eu
+
+port="$(snapctl get port)"
+if [ -z "$port" ]; then
+  port=8080
+  snapctl set port="$port"
+fi
+case "$port" in
+  '' | *[!0-9]* | ??????*)
+    echo "port must be a number between 1 and 65535" >&2
+    exit 1
+    ;;
+esac
+if [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+  echo "port must be between 1 and 65535" >&2
+  exit 1
+fi
+
+addr="$(snapctl get addr)"
+if [ -z "$addr" ]; then
+  addr=127.0.0.1
+  snapctl set addr="$addr"
+fi
+case "$addr" in
+  '' | *[!0-9A-Za-z.:-]*)
+    echo "addr must be an IP address or host name" >&2
+    exit 1
+    ;;
+esac
+
+if snapctl services "$SNAP_INSTANCE_NAME.stirling-pdf" | awk 'NR > 1 {print $3}' | grep -qx active; then
+  snapctl restart "$SNAP_INSTANCE_NAME.stirling-pdf"
+fi

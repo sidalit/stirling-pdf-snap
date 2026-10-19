@@ -1,0 +1,104 @@
+name: stirling-pdf
+base: core26
+adopt-info: stirling-pdf
+title: Stirling-PDF
+summary: Self-hosted PDF tools in your browser
+description: |
+  Merge, split, rotate, compress and process PDF documents locally through
+  a web interface. Includes English OCR and common PDF conversion tools.
+
+  The service starts at http://127.0.0.1:8080. This is the open-source core
+  edition, without accounts or built-in login. Use an authenticated reverse
+  proxy before making it accessible outside this machine.
+license: MIT
+grade: stable
+confinement: strict
+website: https://www.stirlingpdf.com
+source-code: https://github.com/Stirling-Tools/Stirling-PDF
+issues: https://github.com/Stirling-Tools/Stirling-PDF/issues
+contact: https://github.com/sidalit/stirling-pdf-snap/issues
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  stirling-pdf:
+    command: bin/stirling-pdf-launch
+    daemon: simple
+    restart-condition: on-failure
+    plugs:
+      - network
+      - network-bind
+      - removable-media
+
+# These libraries look for their data and configuration at system paths.
+layout:
+  /etc/java-25-openjdk:
+    bind: $SNAP/etc/java-25-openjdk
+  /etc/fonts:
+    bind: $SNAP/etc/fonts
+  /usr/share/fontconfig:
+    bind: $SNAP/usr/share/fontconfig
+  /usr/share/fonts:
+    bind: $SNAP/usr/share/fonts
+  /etc/ghostscript:
+    bind: $SNAP/etc/ghostscript
+  /usr/share/poppler:
+    bind: $SNAP/usr/share/poppler
+  /usr/share/ghostscript:
+    bind: $SNAP/usr/share/ghostscript
+  /usr/share/color/icc:
+    bind: $SNAP/usr/share/color/icc
+
+parts:
+  stirling-pdf:
+    plugin: nil
+    source: https://github.com/Stirling-Tools/Stirling-PDF.git
+    # renovate: depName=Stirling-Tools/Stirling-PDF
+    source-tag: 'v3.2.0'
+    build-snaps:
+      - node/24/stable
+    build-packages:
+      - git
+      - openjdk-25-jdk-headless
+    build-environment:
+      - STIRLING_FLAVOR: core
+      - DISABLE_ADDITIONAL_FEATURES: 'true'
+      - CI: 'true'
+      - PUPPETEER_SKIP_DOWNLOAD: 'true'
+    stage-packages:
+      - openjdk-25-jre-headless
+      - tesseract-ocr
+      - tesseract-ocr-eng
+      - tesseract-ocr-osd
+      - ghostscript
+      - qpdf
+      - poppler-utils
+      - poppler-data
+      - fontconfig
+      - fonts-dejavu-core
+      - fonts-liberation
+    override-pull: |
+      craftctl default
+      version=$(git -C "$CRAFT_PART_SRC" describe --tags --match 'v[0-9]*' --always)
+      craftctl set version="${version#v}"
+    override-build: |
+      export JAVA_HOME="/usr/lib/jvm/java-25-openjdk-${CRAFT_ARCH_BUILD_FOR}"
+      npm install --global --prefix "$CRAFT_PART_BUILD/.task" @go-task/cli@3.54.0
+      export PATH="$CRAFT_PART_BUILD/.task/bin:$JAVA_HOME/bin:$PATH"
+
+      # Build the core web interface and server, without proprietary modules.
+      ./gradlew --no-daemon :stirling-pdf:bootJar \
+        -PbuildWithFrontend=true -PbuildWithPortal=false -PnoSpotless -x test
+      install -Dm644 app/core/build/libs/*.jar "$CRAFT_PART_INSTALL/lib/stirling-pdf.jar"
+      install -Dm644 LICENSE "$CRAFT_PART_INSTALL/share/doc/stirling-pdf/LICENSE"
+
+      # The Debian runtime links to a trust store generated during installation.
+      # Include the build environment's generated store in the snap itself.
+      cp --remove-destination /etc/ssl/certs/java/cacerts \
+        "$CRAFT_PART_INSTALL/usr/lib/jvm/java-25-openjdk-${CRAFT_ARCH_BUILD_FOR}/lib/security/cacerts"
+
+  scripts:
+    plugin: dump
+    source: snap/local
