@@ -1,6 +1,6 @@
 name: stirling-pdf
 base: core26
-adopt-info: stirling-pdf
+version: '3.2.0'
 title: Stirling-PDF
 summary: Self-hosted PDF tools in your browser
 description: |
@@ -55,8 +55,7 @@ parts:
   stirling-pdf:
     plugin: nil
     source: https://github.com/Stirling-Tools/Stirling-PDF.git
-    # renovate: depName=Stirling-Tools/Stirling-PDF
-    source-tag: 'v3.2.0'
+    source-tag: v$SNAPCRAFT_PROJECT_VERSION
     build-snaps:
       - node/24/stable
     build-packages:
@@ -79,10 +78,6 @@ parts:
       - fontconfig
       - fonts-dejavu-core
       - fonts-liberation
-    override-pull: |
-      craftctl default
-      version=$(git -C "$CRAFT_PART_SRC" describe --tags --match 'v[0-9]*' --always)
-      craftctl set version="${version#v}"
     override-build: |
       export JAVA_HOME="/usr/lib/jvm/java-25-openjdk-${CRAFT_ARCH_BUILD_FOR}"
       npm install --global --prefix "$CRAFT_PART_BUILD/.task" @go-task/cli@3.54.0

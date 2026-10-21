@@ -54,7 +54,7 @@ Data, configuration and logs are in `/var/snap/stirling-pdf/common`. Advanced se
 
 ## Update to a new upstream release
 
-Change `source-tag` in `snap/snapcraft.yaml`, then rebuild. The version is taken from the tag.
+Change `version` in `snap/snapcraft.yaml`, then rebuild.
 
 ## Automation
 
