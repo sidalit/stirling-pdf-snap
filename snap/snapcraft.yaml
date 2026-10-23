@@ -14,8 +14,12 @@ license: MIT
 grade: stable
 confinement: strict
 website: https://www.stirlingpdf.com
-source-code: https://github.com/Stirling-Tools/Stirling-PDF
-issues: https://github.com/Stirling-Tools/Stirling-PDF/issues
+source-code:
+  - https://github.com/Stirling-Tools/Stirling-PDF
+  - https://github.com/sidalit/stirling-pdf-snap
+issues:
+  - https://github.com/Stirling-Tools/Stirling-PDF/issues
+  - https://github.com/sidalit/stirling-pdf-snap/issues
 contact: https://github.com/sidalit/stirling-pdf-snap/issues
 
 platforms:
