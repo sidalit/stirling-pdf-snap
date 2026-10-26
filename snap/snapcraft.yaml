@@ -57,7 +57,17 @@ layout:
     bind: $SNAP/usr/share/color/icc
 
 parts:
+  task:
+    plugin: nil
+    build-snaps:
+      - node/24/stable
+    override-build: |
+      npm install --global --prefix "$CRAFT_PART_INSTALL" @go-task/cli@3.54.0
+    prime:
+      - -*
+
   stirling-pdf:
+    after: [task]
     plugin: nil
     source: https://github.com/Stirling-Tools/Stirling-PDF.git
     source-tag: v$SNAPCRAFT_PROJECT_VERSION
@@ -85,8 +95,7 @@ parts:
       - fonts-liberation
     override-build: |
       export JAVA_HOME="/usr/lib/jvm/java-25-openjdk-${CRAFT_ARCH_BUILD_FOR}"
-      npm install --global --prefix "$CRAFT_PART_BUILD/.task" @go-task/cli@3.54.0
-      export PATH="$CRAFT_PART_BUILD/.task/bin:$JAVA_HOME/bin:$PATH"
+      export PATH="$CRAFT_STAGE/bin:$JAVA_HOME/bin:$PATH"
 
       # Build the core web interface and server, without proprietary modules.
       ./gradlew --no-daemon :stirling-pdf:bootJar \
