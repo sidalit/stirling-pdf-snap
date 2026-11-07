@@ -57,6 +57,24 @@ layout:
     bind: $SNAP/usr/share/color/icc
 
 parts:
+  runtime:
+    plugin: nil
+    build-packages:
+      - openjdk-25-jre-headless
+    build-attributes: [enable-patchelf]
+    stage-slices:
+      - openjdk-25-jre-headless_standard
+      - openjdk-25-jre-headless_awt
+      - fontconfig_bins
+      - fonts-dejavu-core_config
+      - fonts-liberation_fonts
+    stage:
+      - -lib
+      - -lib64
+    override-build: |
+      cp --remove-destination /etc/ssl/certs/java/cacerts \
+        "$CRAFT_PART_INSTALL/usr/lib/jvm/java-25-openjdk-${CRAFT_ARCH_BUILD_FOR}/lib/security/cacerts"
+
   task:
     plugin: nil
     build-snaps:
@@ -82,7 +100,6 @@ parts:
       - CI: 'true'
       - PUPPETEER_SKIP_DOWNLOAD: 'true'
     stage-packages:
-      - openjdk-25-jre-headless
       - tesseract-ocr
       - tesseract-ocr-eng
       - tesseract-ocr-osd
@@ -90,9 +107,6 @@ parts:
       - qpdf
       - poppler-utils
       - poppler-data
-      - fontconfig
-      - fonts-dejavu-core
-      - fonts-liberation
     override-build: |
       export JAVA_HOME="/usr/lib/jvm/java-25-openjdk-${CRAFT_ARCH_BUILD_FOR}"
       export PATH="$CRAFT_STAGE/bin:$JAVA_HOME/bin:$PATH"
@@ -102,11 +116,6 @@ parts:
         -PbuildWithFrontend=true -PbuildWithPortal=false -PnoSpotless -x test
       install -Dm644 app/core/build/libs/*.jar "$CRAFT_PART_INSTALL/lib/stirling-pdf.jar"
       install -Dm644 LICENSE "$CRAFT_PART_INSTALL/share/doc/stirling-pdf/LICENSE"
-
-      # The Debian runtime links to a trust store generated during installation.
-      # Include the build environment's generated store in the snap itself.
-      cp --remove-destination /etc/ssl/certs/java/cacerts \
-        "$CRAFT_PART_INSTALL/usr/lib/jvm/java-25-openjdk-${CRAFT_ARCH_BUILD_FOR}/lib/security/cacerts"
 
   scripts:
     plugin: dump
