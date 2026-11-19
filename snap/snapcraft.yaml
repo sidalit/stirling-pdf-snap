@@ -1,6 +1,6 @@
 name: stirling-pdf
 base: core26
-version: '3.3.0'
+version: '3.4.0'
 title: Stirling-PDF
 icon: snap/gui/stirling-pdf.png
 summary: Self-hosted PDF tools in your browser
